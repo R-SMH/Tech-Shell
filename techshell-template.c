@@ -56,7 +56,6 @@ int main() {
 
 }
 
-<<<<<<< HEAD
 char* CommandPrompt(){
     char cwd[1024];
     if (getcwd(cwd, sizeof(cwd)) != NULL){
@@ -69,26 +68,6 @@ char* CommandPrompt(){
     char *line[1024];
 
     fgets(line, sizeof(line), stdin);
-=======
-char* CommandPrompt() {
-	// getcwd() fetches the current working directory 
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
-        fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
-        strcpy(cwd, ""); // fallback prompt
-    }
-
-    printf("%s$ ", cwd);
-    //fflush(stdout);
-	
-    // fgets() takes in the 
-    char line[4096];
-    if (fgets(line, sizeof(line), stdin) == NULL) {
-        // EOF (Ctrl+D) or input error -> exit gracefully
-        printf("\n");
-        exit(0);
-    }
->>>>>>> c577d3b768081d0a0078781b82de7520fc213c13
 
     line[strcspn(line, "\n")] = 0;
     
