@@ -46,7 +46,6 @@ int main() {
         // parse the command line
         command = ParseCommandLine(input);
         // execute the command
-        ExecuteCommand(command);S
         ExecuteCommand(command);
 
         // Freeing the command to avoid memory leakage (segmentation fault)
@@ -202,7 +201,7 @@ static void redirect_handler(char **args) {
         }
             
     }
-    
+
 }
 
 // Helper to free cmd after every execution
