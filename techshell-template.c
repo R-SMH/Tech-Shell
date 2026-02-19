@@ -168,7 +168,7 @@ void ExecuteCommand(struct ShellCommand command) {
 }
 
 
-/*
+
 static void redirect_handler(char **args) {
     for (int i = 0; args[i] != NULL; i++ ){ // -> loops through wtv user types
         
@@ -177,7 +177,7 @@ static void redirect_handler(char **args) {
                 perror("Filename doesn't exist");
                 _exit(1);
             }
-            int fd = popen(args[i + 1], O_RDONLY);
+            int fd = open(args[i + 1], O_RDONLY);
             if (fd < 0){
                 perror("input"); // -> This checks if theres a valid file
                 _exit(1);
@@ -195,7 +195,7 @@ static void redirect_handler(char **args) {
                 perror("Filename doesn't exist");
                 _exit(1);
             }
-            int fd = popen(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            int fd = open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
             if (fd < 0){
                 perror("output error.");
@@ -211,7 +211,7 @@ static void redirect_handler(char **args) {
     }
 
 }
-*/
+
 
 // Helper to free cmd after every execution
 void FreeCommand(struct ShellCommand *cmd) {
