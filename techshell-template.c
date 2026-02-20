@@ -168,7 +168,7 @@ void ExecuteCommand(struct ShellCommand command) {
 }
 
 
-
+/*
 static void redirect_handler(char **args) {
     for (int i = 0; args[i] != NULL; i++ ){ // -> loops through wtv user types
         
@@ -211,7 +211,7 @@ static void redirect_handler(char **args) {
     }
 
 }
-
+*/
 
 // Helper to free cmd after every execution
 void FreeCommand(struct ShellCommand *cmd) {
