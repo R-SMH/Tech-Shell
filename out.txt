@@ -1,0 +1,5 @@
+out.txt
+README.md
+techshell
+techshell-template.c
+Test.txt
