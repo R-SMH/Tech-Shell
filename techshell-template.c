@@ -4,14 +4,14 @@
 */
 
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>   
+#include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
-#include <wait.h>
-
 
 //Functions to implement:
 char* CommandPrompt(); // Display current working directory and return user input
@@ -22,7 +22,8 @@ void ExecuteCommand(struct ShellCommand command); //Execute a shell command
 
 void FreeCommand(struct ShellCommand *cmd);
 
-static void redirect_handler(char **args);
+static void redirection(struct ShellCommand command);
+
 struct ShellCommand {
     char **argv;      // execvp args (argv[0] is command, last must be NULL)
     char *in_file;    // filename after <
@@ -56,23 +57,28 @@ int main() {
 
 }
 
-char* CommandPrompt(){
-    char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) != NULL){
-        printf("%s$ \n", cwd)
-    } else {
-        perror("Directory get error.");
-        printf("$ ")
+char* CommandPrompt() {
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
+        strcpy(cwd, ""); // fallback prompt
     }
 
-    char *line[1024];
+    printf("%s$ ", cwd);
+    fflush(stdout);
 
-    fgets(line, sizeof(line), stdin);
+    char line[4096];
+    if (fgets(line, sizeof(line), stdin) == NULL) {
+        // EOF (Ctrl+D) or input error -> exit gracefully
+        printf("\n");
+        exit(0);
+    }
 
-    line[strcspn(line, "\n")] = 0;
-    
-    return 0;
+    // Strip trailing newline
+    line[strcspn(line, "\n")] = '\0';
 
+    // Return heap copy so caller can keep it
+    return strdup(line);
 }
 
 struct ShellCommand ParseCommandLine(char* input) {
@@ -92,16 +98,29 @@ struct ShellCommand ParseCommandLine(char* input) {
     char *token = strtok(input, " ");
     
     while (token != NULL) {
+	
+	// if token is an infile
         if (strcmp(token, "<") == 0) {
             token = strtok(NULL, " ");
             if (token) cmd.in_file = strdup(token);
-        } else if (strcmp(token, ">") == 0) {
+        } 
+	
+	// if token is an outfile
+	else if (strcmp(token, ">") == 0) {
             token = strtok(NULL, " ");
+<<<<<<< HEAD
             if (token) cmd.out_file = strdup(token); // I am a goonmaster
         } else {
             cmd.argv[argc++] = strdup(token);
+=======
+            if (token) cmd.out_file = strdup(token);
+>>>>>>> 9401283336f5fa33ec7dfd29f94dc19777af5608
         }
-        token = strtok(NULL, " ");
+	
+	else cmd.argv[argc++] = strdup(token); // standard command; add into argv array
+        
+
+        token = strtok(NULL, " ");	// call the tokenizer
     }
 
     cmd.argv[argc] = NULL;   // even if argc==0
@@ -113,11 +132,12 @@ void ExecuteCommand(struct ShellCommand command) {
     if (command.argv == NULL || command.argv[0] == NULL)
     	return;
 
-        if (strcmp(command.argv[0], "exit") == 0){
-            exit(0);
-        }
+    // if typed 'exit'
+    if (strcmp(command.argv[0], "exit") == 0){
+        exit(0);
+    }
 
-    
+    // if typed 'cd'
     if (strcmp(command.argv[0], "cd") == 0){
         char *dir = command.argv[1];
 
@@ -144,6 +164,8 @@ void ExecuteCommand(struct ShellCommand command) {
 
 
     if (pid == 0){
+
+	if (command.in_file != NULL || command.out_file != NULL) redirection (command);
         execvp(command.argv[0], command.argv);
 
 	// only if anything wrong is typed in (e.g. an invalid flag, typos, etc.)
@@ -161,47 +183,28 @@ void ExecuteCommand(struct ShellCommand command) {
 
 }
 
-static void redirect_handler(char **args) {
-    for (int i = 0; args[i] != NULL; i++ ){ // -> loops through wtv user types
-        
-        if (strcmp(args[i], "<") == 0) {
-             if (args[i + 1] == NULL){
-                perror("Filename doesn't exist");
-                _exit(1);
-            }
-            int fd = open(args[i + 1], O_RDONLY);
-            if (fd < 0){
-                perror("input"); // -> This checks if theres a valid file
-                _exit(1);
+static void redirection(struct ShellCommand command){
+		
+		if (command.in_file){
+		    int file = open(command.in_file, O_RDONLY);	// open in read-only mode
+		    if (file < 0){
+		        fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
+			_exit(1);
+		    }
+		    dup2(file, STDIN_FILENO);
+		    close(file);
+		}
 
-            }
-            dup2(fd, STDIN_FILENO);
-            close(fd);
-            args[i] = NULL;
-            args[i+1] = NULL;
-            i += 1;
-        }
-        
-        else if (strcmp(args[i], ">") == 0)  {
-            if (args[i + 1] == NULL){
-                perror("Filename doesn't exist");
-                _exit(1);
-            }
-            int fd = open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
-            if (fd < 0){
-                perror("output error.");
-                _exit(1);
-        }
-        dup2(fd, STDOUT_FILENO);
-        close(fd);
-        args[i] = NULL;
-        args[i + 1] = NULL;
-        i += 1;
-        }
-            
-    }
-
+		if (command.out_file){
+		    int file = open(command.out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644); // open for writing, create if missing, truncate if it exists, permissions rw-r--r--
+		    if(file < 0){
+		    fprintf(stderr, "Error %d (%s)\n", errno, strerror(errno));
+		    _exit(1);
+		    }
+		    dup2(file, STDOUT_FILENO);
+		    close(file);
+		}	
+	
 }
 
 // Helper to free cmd after every execution
