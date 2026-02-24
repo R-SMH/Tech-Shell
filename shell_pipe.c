@@ -28,7 +28,8 @@ void FreeCommand(struct ShellCommand *cmd, int ncmds);
 
 static void redirection(struct ShellCommand command);
 
-struct ShellCommand { 
+struct ShellCommand {
+    // char ***argv;    // array of commands(e.g. **argv[0] = ls -l , **argv[1] = wc -l 
     char **argv;      // execvp args (argv[0] is command, last must be NULL)
     char *in_file;    // filename after <
     char *out_file;   // filename after >
@@ -145,9 +146,6 @@ struct ShellCommand *ParseCommandLine(char* input, int *ncmds) {
                 *ncmds = count_command; 
                 return cmd;
             }
-            if (token) cmd.out_file = strdup(token); // I am a goonmaster
-        } else {
-            cmd.argv[argc++] = strdup(token);
         }
 
         else cmd[count_command].argv[argc++] = strdup(token); // standard command; add into argv array 
