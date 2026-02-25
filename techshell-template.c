@@ -49,8 +49,8 @@ int main() {
         // execute the command
         ExecuteCommand(command);
 
-        // Freeing the command to avoid memory leakage (segmentation fault)
-        FreeCommand(&command);
+        // Freeing the command to avoid memory issues
+        FreeCommand(&command); // 
         free(input);
     }
     exit(0);
@@ -69,7 +69,7 @@ char* CommandPrompt() {
 
     char line[4096];
     if (fgets(line, sizeof(line), stdin) == NULL) {
-        // EOF (Ctrl+D) or input error -> exit gracefully
+        // EOF (Ctrl+D) or input error -
         printf("\n");
         exit(0);
     }
@@ -108,13 +108,7 @@ struct ShellCommand ParseCommandLine(char* input) {
 	// if token is an outfile
 	else if (strcmp(token, ">") == 0) {
             token = strtok(NULL, " ");
-<<<<<<< HEAD
-            if (token) cmd.out_file = strdup(token); // I am a goonmaster
-        } else {
-            cmd.argv[argc++] = strdup(token);
-=======
             if (token) cmd.out_file = strdup(token);
->>>>>>> 9401283336f5fa33ec7dfd29f94dc19777af5608
         }
 	
 	else cmd.argv[argc++] = strdup(token); // standard command; add into argv array
